@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicEvents+ | Civic Experiences</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        accent: '#f59e0b',
+                        dark: { 50:'#18181b',100:'#1f1f23',200:'#27272a',300:'#3f3f46',400:'#52525b',500:'#71717a' },
+                        success: '#10b981',
+                        danger: '#ef4444'
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0a0a0b; }
+        .glass { background: rgba(31,31,35,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .gradient-text { background: linear-gradient(135deg, #6366f1 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-gradient { background: radial-gradient(ellipse at top, rgba(99,102,241,0.15) 0%, transparent 50%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(99,102,241,0.2); }
+        .skeleton { background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .toast { animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .notification-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .marquee { animation: scroll 20s linear infinite; }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.5); }
+        .password-strength { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen text-white">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-white/70">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="main-nav" class="fixed top-0 left-0 right-0 z-40 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="index.html" class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">C+</span>
+                    </div>
+                    <span class="font-bold text-xl gradient-text">CivicEvents+</span>
+                </a>
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="events.html" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Events</a>
+                    <a href="announcements.html" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Announcements</a>
+                    <a href="promos.html" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Promos</a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div id="auth-buttons" class="flex items-center space-x-2">
+                        <a href="login.html" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Login</a>
+                        <a href="signup.html" class="px-4 py-2 bg-primary rounded-lg hover:bg-primary/80 transition font-medium">Sign Up</a>
+                    </div>
+                    <div id="user-menu" class="hidden items-center space-x-3">
+                        <button id="notification-btn" class="relative p-2 rounded-lg hover:bg-white/10 transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <span id="notification-count" class="absolute -top-1 -right-1 w-5 h-5 bg-accent text-xs rounded-full flex items-center justify-center notification-badge hidden">0</span>
+                        </button>
+                        <div class="relative">
+                            <button id="profile-btn" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/10 transition">
+                                <div class="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
+                                    <span id="user-initial" class="text-sm font-bold">U</span>
+                                </div>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="profile-dropdown" class="absolute right-0 mt-2 w-56 glass rounded-xl shadow-xl hidden">
+                                <div class="p-4 border-b border-white/10">
+                                    <p id="dropdown-name" class="font-medium">User Name</p>
+                                    <p id="dropdown-email" class="text-sm text-white/50">user@email.com</p>
+                                    <span id="dropdown-role" class="inline-block mt-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">user</span>
+                                </div>
+                                <div class="p-2">
+                                    <a href="profile.html" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">My Profile</a>
+                                    <a href="my-registrations.html" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">My Registrations</a>
+                                    <a href="my-feedback.html" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">My Feedback</a>
+                                    <div id="admin-links" class="hidden">
+                                        <hr class="my-2 border-white/10">
+                                        <a href="dashboard.html" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition text-accent">Dashboard</a>
+                                        <a href="admin-users.html" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">Manage Users</a>
+                                    </div>
+                                    <hr class="my-2 border-white/10">
+                                    <button id="logout-btn" class="w-full text-left px-4 py-2 rounded-lg hover:bg-danger/20 text-danger transition">Logout</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification Panel -->
+    <div id="notification-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 glass z-50 transform translate-x-full transition-transform duration-300">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Notifications</h2>
+            <button id="close-notifications" class="p-2 rounded-lg hover:bg-white/10"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="notifications-list" class="p-4 space-y-3 overflow-y-auto" style="height: calc(100% - 70px);"></div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center hero-gradient pt-16">
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl"></div>
+        </div>
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto">
+            <div class="mb-6 overflow-hidden">
+                <div class="flex whitespace-nowrap marquee">
+                    <span class="text-white/30 text-sm px-4">✦ Events</span>
+                    <span class="text-white/30 text-sm px-4">✦ Community</span>
+                    <span class="text-white/30 text-sm px-4">✦ Announcements</span>
+                    <span class="text-white/30 text-sm px-4">✦ Promos</span>
+                    <span class="text-white/30 text-sm px-4">✦ Civic Engagement</span>
+                    <span class="text-white/30 text-sm px-4">✦ Events</span>
+                    <span class="text-white/30 text-sm px-4">✦ Community</span>
+                    <span class="text-white/30 text-sm px-4">✦ Announcements</span>
+                </div>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-6">
+                <span class="gradient-text">Civic Experiences</span>
+                <br>That Matter
+            </h1>
+            <p class="text-xl text-white/60 mb-8 max-w-2xl mx-auto">Discover, register, and engage with local events, announcements, and community initiatives. Your gateway to civic participation.</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="events.html" class="px-8 py-4 bg-primary rounded-xl font-semibold hover:bg-primary/80 transition transform hover:scale-105">Explore Events</a>
+                <a href="signup.html" class="px-8 py-4 glass rounded-xl font-semibold hover:bg-white/10 transition">Get Started</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Events -->
+    <section class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-3xl font-bold">Upcoming Events</h2>
+                <a href="events.html" class="text-primary hover:text-primary/80 transition flex items-center gap-2">View All <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+            </div>
+            <div id="featured-events" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Events loaded dynamically -->
+                <div class="skeleton h-80 rounded-2xl"></div>
+                <div class="skeleton h-80 rounded-2xl"></div>
+                <div class="skeleton h-80 rounded-2xl"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-20 px-4 glass">
+        <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center">
+                <p id="stat-events" class="text-4xl font-bold gradient-text">0</p>
+                <p class="text-white/50 mt-2">Events</p>
+            </div>
+            <div class="text-center">
+                <p id="stat-users" class="text-4xl font-bold gradient-text">0</p>
+                <p class="text-white/50 mt-2">Community Members</p>
+            </div>
+            <div class="text-center">
+                <p id="stat-announcements" class="text-4xl font-bold gradient-text">0</p>
+                <p class="text-white/50 mt-2">Announcements</p>
+            </div>
+            <div class="text-center">
+                <p id="stat-promos" class="text-4xl font-bold gradient-text">0</p>
+                <p class="text-white/50 mt-2">Promos</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-white/10">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">C+</span></div>
+                        <span class="font-bold text-xl">CivicEvents+</span>
+                    </div>
+                    <p class="text-white/50 text-sm">Your gateway to civic engagement and community experiences.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <div class="space-y-2 text-white/50">
+                        <a href="events.html" class="block hover:text-white transition">Events</a>
+                        <a href="announcements.html" class="block hover:text-white transition">Announcements</a>
+                        <a href="promos.html" class="block hover:text-white transition">Promos</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <div class="space-y-2 text-white/50">
+                        <a href="#" class="block hover:text-white transition">Help Center</a>
+                        <a href="#" class="block hover:text-white transition">Contact Us</a>
+                        <a href="#" class="block hover:text-white transition">Privacy Policy</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-white/50 text-sm">
+                        <p>Email: support@civicevents.com</p>
+                        <p>Phone: +250 788 123 456</p>
+                        <p>Kigali, Rwanda</p>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-white/10 text-center text-white/30 text-sm">
+                <p>&copy; 2025 CivicEvents+. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | CivicEvents+</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1', accent: '#f59e0b',
+                        dark: { 50:'#18181b',100:'#1f1f23',200:'#27272a',300:'#3f3f46' },
+                        success: '#10b981', danger: '#ef4444'
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0a0a0b; }
+        .glass { background: rgba(31,31,35,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .gradient-text { background: linear-gradient(135deg, #6366f1 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .toast { animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        input:focus { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.5); }
+        .password-strength { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen text-white flex items-center justify-center p-4">
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-white/70">Loading...</p>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-md">
+        <a href="index.html" class="flex items-center justify-center space-x-2 mb-8">
+            <div class="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
+                <span class="text-white font-bold">C+</span>
+            </div>
+            <span class="font-bold text-2xl gradient-text">CivicEvents+</span>
+        </a>
+
+        <div class="glass rounded-2xl p-8">
+            <h1 class="text-2xl font-bold text-center mb-2">Create Account</h1>
+            <p class="text-white/50 text-center mb-8">Join the civic community</p>
+
+            <form id="signup-form" class="space-y-5">
+                <div>
+                    <label for="full_name" class="block text-sm font-medium mb-2">Full Name</label>
+                    <input type="text" id="full_name" name="full_name" required
+                        class="w-full px-4 py-3 bg-dark-100 border border-white/10 rounded-xl focus:border-primary transition"
+                        placeholder="John Doe">
+                    <p id="name-error" class="text-danger text-sm mt-1 hidden"></p>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="email" name="email" required
+                        class="w-full px-4 py-3 bg-dark-100 border border-white/10 rounded-xl focus:border-primary transition"
+                        placeholder="your@email.com">
+                    <p id="email-error" class="text-danger text-sm mt-1 hidden"></p>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required
+                            class="w-full px-4 py-3 bg-dark-100 border border-white/10 rounded-xl focus:border-primary transition pr-12"
+                            placeholder="••••••••">
+                        <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                            <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                    <!-- Password strength meter -->
+                    <div class="mt-2">
+                        <div class="h-1.5 bg-dark-200 rounded-full overflow-hidden">
+                            <div id="password-strength-bar" class="h-full password-strength bg-danger" style="width: 0%"></div>
+                        </div>
+                        <p id="password-strength-text" class="text-xs mt-1 text-white/50">Password strength: <span>Very Weak</span></p>
+                    </div>
+                    <p class="text-xs text-white/40 mt-2">Min 8 chars, uppercase, lowercase, number, special char</p>
+                    <p id="password-error" class="text-danger text-sm mt-1 hidden"></p>
+                </div>
+
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium mb-2">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required
+                        class="w-full px-4 py-3 bg-dark-100 border border-white/10 rounded-xl focus:border-primary transition"
+                        placeholder="••••••••">
+                    <p id="confirm-error" class="text-danger text-sm mt-1 hidden"></p>
+                </div>
+
+                <p id="form-error" class="text-danger text-sm text-center hidden"></p>
+
+                <button type="submit" class="w-full py-3 bg-primary rounded-xl font-semibold hover:bg-primary/80 transition transform hover:scale-[1.02]">
+                    Create Account
+                </button>
+            </form>
+
+            <p class="text-center text-white/50 mt-6">
+                Already have an account? 
+                <a href="login.html" class="text-primary hover:underline">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        $(document).ready(function() {
+            if (Storage.get(CONFIG.TOKEN_KEY)) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Password toggle
+            $('#toggle-password').on('click', function() {
+                const input = $('#password');
+                const type = input.attr('type') === 'password' ? 'text' : 'password';
+                input.attr('type', type);
+            });
+
+            // Password strength meter
+            $('#password').on('input', function() {
+                const password = $(this).val();
+                const strength = Utils.checkPasswordStrength(password);
+                
+                $('#password-strength-bar')
+                    .css('width', strength.width)
+                    .removeClass('bg-danger bg-orange-500 bg-yellow-500 bg-lime-500 bg-success')
+                    .addClass(strength.color);
+                
+                $('#password-strength-text span').text(strength.label);
+            });
+
+            // Form submission
+            $('#signup-form').on('submit', async function(e) {
+                e.preventDefault();
+                
+                $('.text-danger').addClass('hidden').text('');
+                
+                const full_name = $('#full_name').val().trim();
+                const email = $('#email').val().trim();
+                const password = $('#password').val();
+                const confirm_password = $('#confirm_password').val();
+                
+                let hasError = false;
+                
+                if (!full_name || full_name.length < 2) {
+                    $('#name-error').text('Please enter your full name').removeClass('hidden');
+                    hasError = true;
+                }
+                
+                if (!email || !Utils.isValidEmail(email)) {
+                    $('#email-error').text('Please enter a valid email').removeClass('hidden');
+                    hasError = true;
+                }
+                
+                const strength = Utils.checkPasswordStrength(password);
+                if (strength.score < 5) {
+                    $('#password-error').text('Password must meet all requirements').removeClass('hidden');
+                    hasError = true;
+                }
+                
+                if (password !== confirm_password) {
+                    $('#confirm-error').text('Passwords do not match').removeClass('hidden');
+                    hasError = true;
+                }
+                
+                if (hasError) return;
+                
+                try {
+                    Utils.showLoading();
+                    const res = await API.post('/auth/signup', { full_name, email, password, role: 'user' });
+                    Utils.hideLoading();
+                    
+                    if (res.status === 201) {
+                        Utils.showToast('Account created successfully!', 'success');
+                        setTimeout(() => window.location.href = 'login.html', 1500);
+                    } else {
+                        $('#form-error').text(res.message || 'Signup failed').removeClass('hidden');
+                    }
+                } catch (err) {
+                    Utils.hideLoading();
+                    $('#form-error').text('An error occurred. Please try again.').removeClass('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
